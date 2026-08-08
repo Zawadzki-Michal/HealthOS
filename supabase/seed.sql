@@ -1,0 +1,1 @@
+-- Local dev seed data. Empty for now -- single-user project, no fixtures needed yet.
