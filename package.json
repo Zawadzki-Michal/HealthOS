@@ -1,0 +1,14 @@
+{
+  "name": "healthos",
+  "private": true,
+  "version": "0.0.0",
+  "description": "Repo-root utility scripts (RLS testing, etc). apps/web and workers/health-mcp have their own package.json.",
+  "type": "module",
+  "scripts": {
+    "test:rls": "node scripts/test-rls.mjs"
+  },
+  "devDependencies": {
+    "@supabase/supabase-js": "^2.45.4",
+    "dotenv": "^16.4.5"
+  }
+}
