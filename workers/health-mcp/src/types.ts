@@ -17,14 +17,24 @@ export interface HealthAutoExportPayload {
   };
 }
 
+// Most metrics carry a flat `qty`, but a few don't: heart_rate reports
+// Avg/Min/Max instead, and sleep_analysis reports totalSleep -- see
+// extractMetricValue in webhook.ts, must not assume `qty` is present.
+export interface HealthAutoExportMetricSample {
+  date: string; // 'YYYY-MM-DD HH:mm:ss +ZZZZ'
+  qty?: number;
+  Avg?: number;
+  Min?: number;
+  Max?: number;
+  totalSleep?: number;
+  asleep?: number;
+  source?: string;
+}
+
 export interface HealthAutoExportMetric {
   name: string; // e.g. 'step_count', 'heart_rate', 'active_energy'
   units: string;
-  data: Array<{
-    date: string; // 'YYYY-MM-DD HH:mm:ss +ZZZZ'
-    qty: number;
-    source?: string;
-  }>;
+  data: HealthAutoExportMetricSample[];
 }
 
 export interface HealthAutoExportWorkout {

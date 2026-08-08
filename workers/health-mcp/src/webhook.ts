@@ -1,18 +1,40 @@
 import type {
   Env,
+  HealthAutoExportMetricSample,
   HealthAutoExportPayload,
   HealthMetricRow,
   WorkoutRow,
 } from "./types";
 
+// health_metrics.value is NOT NULL, and most Health Auto Export metrics carry
+// a flat `qty` -- but heart_rate reports Avg/Min/Max and sleep_analysis
+// reports totalSleep, with no `qty` at all. A missing value would fail the
+// NOT NULL constraint and (since rows insert as one batch) take the whole
+// day's export down with it, not just the one unmappable sample.
+function extractMetricValue(
+  metricName: string,
+  sample: HealthAutoExportMetricSample,
+): number | undefined {
+  if (typeof sample.qty === "number") return sample.qty;
+  const name = metricName.toLowerCase();
+  if (name === "heart_rate") return sample.Avg ?? sample.Min ?? sample.Max;
+  if (name === "sleep_analysis") return sample.totalSleep ?? sample.asleep;
+  return undefined;
+}
+
 function mapMetrics(payload: HealthAutoExportPayload, ownerUserId: string): HealthMetricRow[] {
   const rows: HealthMetricRow[] = [];
   for (const metric of payload.data.metrics ?? []) {
     for (const sample of metric.data) {
+      const value = extractMetricValue(metric.name, sample);
+      if (value === undefined) {
+        console.error(`Skipping ${metric.name} sample with no usable value field`, sample);
+        continue;
+      }
       rows.push({
         user_id: ownerUserId,
         metric_type: metric.name,
-        value: sample.qty,
+        value,
         unit: metric.units,
         recorded_at: new Date(sample.date).toISOString(),
         source: sample.source ?? null,
