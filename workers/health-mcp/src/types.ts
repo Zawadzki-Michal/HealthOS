@@ -1,0 +1,65 @@
+export interface Env {
+  SUPABASE_URL: string;
+  SUPABASE_SERVICE_ROLE_KEY: string;
+  WEBHOOK_SECRET: string;
+  // The single HealthOS user's auth.users UUID. Service-role writes have no
+  // JWT session, so `user_id default auth.uid()` can't resolve on its own --
+  // every row the Worker inserts must be stamped with this explicitly.
+  OWNER_USER_ID: string;
+}
+
+// Health Auto Export's REST API webhook payload shape:
+// https://www.healthyapps.dev/docs (metrics grouped by name, workouts as a flat list)
+export interface HealthAutoExportPayload {
+  data: {
+    metrics?: HealthAutoExportMetric[];
+    workouts?: HealthAutoExportWorkout[];
+  };
+}
+
+export interface HealthAutoExportMetric {
+  name: string; // e.g. 'step_count', 'heart_rate', 'active_energy'
+  units: string;
+  data: Array<{
+    date: string; // 'YYYY-MM-DD HH:mm:ss +ZZZZ'
+    qty: number;
+    source?: string;
+  }>;
+}
+
+export interface HealthAutoExportWorkout {
+  name: string; // e.g. 'Functional Strength Training'
+  start: string;
+  end: string;
+  duration?: number; // seconds
+  activeEnergyBurned?: { qty: number };
+  distance?: { qty: number };
+  avgHeartRate?: { qty: number };
+  maxHeartRate?: { qty: number };
+  source?: string;
+}
+
+// Row shapes matching supabase/migrations/0001_init.sql
+export interface HealthMetricRow {
+  user_id: string;
+  metric_type: string;
+  value: number;
+  unit: string;
+  recorded_at: string;
+  source: string | null;
+  raw_payload: unknown;
+}
+
+export interface WorkoutRow {
+  user_id: string;
+  workout_type: string;
+  started_at: string;
+  ended_at: string;
+  duration_seconds: number | null;
+  active_energy_kcal: number | null;
+  total_distance_m: number | null;
+  avg_heart_rate: number | null;
+  max_heart_rate: number | null;
+  source: string | null;
+  raw_payload: unknown;
+}
