@@ -23,6 +23,25 @@ function mapMetrics(payload: HealthAutoExportPayload, ownerUserId: string): Heal
   return rows;
 }
 
+// Health Auto Export reports each workout's energy/distance in whatever unit
+// the account is set to (kJ or kcal; km or mi) -- LifeOS's health_client.py
+// found this the hard way (7164 "kcal" for one day that was actually kJ).
+// The row's units are fixed columns, so normalize here rather than trusting qty.
+function energyToKcal(qty: number, units?: string): number {
+  const u = (units ?? "").trim().toLowerCase();
+  if (u === "kj" || u === "kilojoule" || u === "kilojoules") {
+    return qty / 4.184;
+  }
+  return qty;
+}
+
+function distanceToMeters(qty: number, units?: string): number {
+  const u = (units ?? "").trim().toLowerCase();
+  if (u === "km" || u === "kilometer" || u === "kilometers") return qty * 1000;
+  if (u === "mi" || u === "mile" || u === "miles") return qty * 1609.344;
+  return qty;
+}
+
 function mapWorkouts(payload: HealthAutoExportPayload, ownerUserId: string): WorkoutRow[] {
   return (payload.data.workouts ?? []).map((workout) => ({
     user_id: ownerUserId,
@@ -30,8 +49,12 @@ function mapWorkouts(payload: HealthAutoExportPayload, ownerUserId: string): Wor
     started_at: new Date(workout.start).toISOString(),
     ended_at: new Date(workout.end).toISOString(),
     duration_seconds: workout.duration ?? null,
-    active_energy_kcal: workout.activeEnergyBurned?.qty ?? null,
-    total_distance_m: workout.distance?.qty ?? null,
+    active_energy_kcal: workout.activeEnergyBurned
+      ? energyToKcal(workout.activeEnergyBurned.qty, workout.activeEnergyBurned.units)
+      : null,
+    total_distance_m: workout.distance
+      ? distanceToMeters(workout.distance.qty, workout.distance.units)
+      : null,
     avg_heart_rate: workout.avgHeartRate?.qty ?? null,
     max_heart_rate: workout.maxHeartRate?.qty ?? null,
     source: workout.source ?? null,

@@ -32,8 +32,10 @@ export interface HealthAutoExportWorkout {
   start: string;
   end: string;
   duration?: number; // seconds
-  activeEnergyBurned?: { qty: number };
-  distance?: { qty: number };
+  // `units` varies per-account (kJ vs kcal for energy, km vs mi for distance) --
+  // see mapWorkouts in webhook.ts, must not be assumed.
+  activeEnergyBurned?: { qty: number; units?: string };
+  distance?: { qty: number; units?: string };
   avgHeartRate?: { qty: number };
   maxHeartRate?: { qty: number };
   source?: string;
