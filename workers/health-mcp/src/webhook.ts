@@ -70,7 +70,9 @@ function mapWorkouts(payload: HealthAutoExportPayload, ownerUserId: string): Wor
     workout_type: workout.name,
     started_at: new Date(workout.start).toISOString(),
     ended_at: new Date(workout.end).toISOString(),
-    duration_seconds: workout.duration ?? null,
+    // duration_seconds is an integer column; HealthKit reports duration as a
+    // fractional number of seconds, which Postgres rejects outright.
+    duration_seconds: workout.duration != null ? Math.round(workout.duration) : null,
     active_energy_kcal: workout.activeEnergyBurned
       ? energyToKcal(workout.activeEnergyBurned.qty, workout.activeEnergyBurned.units)
       : null,
@@ -129,7 +131,11 @@ export async function handleWebhook(request: Request, env: Env): Promise<Respons
     ]);
   } catch (error) {
     console.error(error);
-    return new Response("Failed to store health data", { status: 502 });
+    // Health Auto Export's activity log surfaces the response body directly,
+    // which is otherwise the only way to see what went wrong from the phone
+    // -- there's no console.error visibility without a `wrangler tail` session.
+    const message = error instanceof Error ? error.message : "Failed to store health data";
+    return new Response(message, { status: 502 });
   }
 
   return new Response(
