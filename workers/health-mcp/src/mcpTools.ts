@@ -1,6 +1,7 @@
 import type { McpTool } from "./mcpTypes";
 import { logCalories } from "./tools/logCalories";
 import { logMeasurement } from "./tools/logMeasurement";
+import { logPhotoCheckin } from "./tools/logPhotoCheckin";
 import { logSet } from "./tools/logSet";
 
-export const tools: McpTool[] = [logSet, logCalories, logMeasurement];
+export const tools: McpTool[] = [logSet, logCalories, logMeasurement, logPhotoCheckin];
