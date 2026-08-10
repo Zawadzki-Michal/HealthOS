@@ -6,6 +6,11 @@ export interface Env {
   // JWT session, so `user_id default auth.uid()` can't resolve on its own --
   // every row the Worker inserts must be stamped with this explicitly.
   OWNER_USER_ID: string;
+  // Bearer token for the /mcp endpoint, checked against the `Authorization`
+  // header. Same role as WEBHOOK_SECRET but separate, since the MCP
+  // connector and Health Auto Export are different callers with different
+  // rotation needs.
+  MCP_AUTH_TOKEN: string;
 }
 
 // Health Auto Export's REST API webhook payload shape:
